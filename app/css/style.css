@@ -21,10 +21,21 @@
 .sub-row .new-task-bar-label{
   margin:10px;
 }
-.task-table{
+.tasks{
   margin-left:20px;
   margin-right:20px;
 }
 .btn-new-task{
   margin:10px;
 }
+
+.task-low {
+  background: rgba(0,250,0,0.5);
+}
+.task-medium {
+  background: rgba(250,250,0,0.5);
+}
+.task-high {
+  background: rgba(250,0,0,0.5);
+}
+
