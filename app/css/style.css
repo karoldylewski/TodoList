@@ -1,0 +1,24 @@
+.main-window-subheader{
+  text-align: center;
+ /* margin-top:5px !important;*/
+}
+
+.header-row{
+  background-color: rgb(245, 245, 245);
+  margin-top:10px;
+  margin-bottom:10px;
+  margin-left:25%;
+  margin-right:25%;
+  border-radius: 15px;
+}
+.sub-row{
+  background-color: rgb(245, 245, 245);
+  margin-bottom:10px;
+  margin-left:10%;
+  margin-right:10%;
+  border-radius: 15px;
+}
+.task-table{
+  margin-left:20px;
+  margin-right:20px;
+}
