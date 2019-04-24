@@ -18,7 +18,13 @@
   margin-right:10%;
   border-radius: 15px;
 }
+.sub-row .new-task-bar-label{
+  margin:10px;
+}
 .task-table{
   margin-left:20px;
   margin-right:20px;
+}
+.btn-new-task{
+  margin:10px;
 }
