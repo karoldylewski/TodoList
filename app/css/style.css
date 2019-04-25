@@ -22,9 +22,8 @@
 .tasks{
   margin-left:20px;
   margin-right:20px;
-  width: 100% !Important;
 }
-.tasks span{
+.tasks .btn-sort{
   color: unset;
   background: unset;
   margin-left:20px;
@@ -33,17 +32,14 @@
 .btn-new-task{
   margin:10px;
 }
-.task-low {
-  background: rgba(0,250,0,0.5);
-  color: black;
+.task-low span{
+  color: #2ECC71;
 }
-.task-medium {
-  background: rgba(250,250,0,0.5);
-  color: black;
+.task-medium span{
+  color: #F1C40F;
 }
-.task-high {
-  background-color: rgba(200,0,0,0.5);
-  color: black;
+.task-high span{
+  color: #E74C3C;
 }
 .center-content{
   display: flex;
@@ -71,4 +67,7 @@
 }
 .select{
   min-width: 120px;
+}
+.btn{
+  font-size: 16px;
 }

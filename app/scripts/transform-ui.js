@@ -2,6 +2,7 @@ const charsetEncoding = 'data:text/json;charset=utf-8,';
 const nameEmptyAlert = 'Name must be filled out!';
 const downloadFileName = 'task.json';
 const tableIndexToAppend = -1;
+const priorityMark = "<span class='fui-info-circle'> </span>";
 const btnSaveToFile = document.getElementById("btn-save-to-file").addEventListener("click", prepareFileToDownload);
 const btnNewTask = document.getElementById("new-task-submit").addEventListener("click", submitNewTask);
 const sortByName = document.getElementById("task-name-sort").addEventListener("click", function(){
@@ -11,7 +12,7 @@ const sortByPriority = document.getElementById("task-priority-sort").addEventLis
   sortTable(1);
 }, false);
 const loadFromFile = document.getElementById("btn-load-from-file").addEventListener("click", function(){
-  openFile(saveFromFile);
+  openFile(parseJsonTasksToObject);
 }, false);
 const loaded = document.addEventListener("DOMContentLoaded", onPageLoaded)
 $("select").select2({dropdownCssClass: 'dropdown-inverse'});
@@ -66,13 +67,13 @@ function fetchTask(element, index, array){
   appendToTable(parsedTask);
 }
 function appendToTable(parsedTask){
-  const taskTable = document.getElementById('task-table');
+  const taskTable = document.getElementById('task-table-body');
   const row = taskTable.insertRow(tableIndexToAppend);
   const taskNameCell = row.insertCell(tableIndexToAppend);
   const taskPriorityCell = row.insertCell(tableIndexToAppend);
   row.classList.add('task-'+parsedTask.priority.toLowerCase());
   taskNameCell.innerHTML = parsedTask.name;
-  taskPriorityCell.innerHTML = parsedTask.priority;
+  taskPriorityCell.innerHTML = priorityMark+parsedTask.priority;
 }
 function updateTaskList(taskName){
   let storedKeys = localStorage.getItem('taskNames');
@@ -96,24 +97,24 @@ function generateTaskName(){
     currentTime.getMinutes().toString()+
     currentTime.getSeconds().toString()+
     currentTime.getMilliseconds().toString()+
-  Math.random();
+    Math.random();
   return key;
 }
 function validateForm() {
   let nameInput = document.forms["new-task-form"]["new-task"].value;
-  if (nameInput == "") {
+  if (!nameInput.replace(/\s/g, '').length){
     alert(nameEmptyAlert);
     return false;
   }else{
     return true;
   }
 }
-function saveFromFile(contents) {
+function parseJsonTasksToObject(contents) {
   const parsedTasks = JSON.parse(contents);
   parsedTasks.forEach(submitTask);
   location.reload();
 }
-function clickElem(elem) {
+function openFileMouseEventHandler(elem) {
   const eventMouse = document.createEvent("MouseEvents");
   eventMouse.initMouseEvent("click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
   elem.dispatchEvent(eventMouse);
@@ -138,7 +139,7 @@ function openFile(func) {
   fileInput.onchange=readFile;
   fileInput.func=func;
   document.body.appendChild(fileInput);
-  clickElem(fileInput);
+  openFileMouseEventHandler(fileInput);
 }
 function sortTable(column) {
   let table, rows, switching, i, x, y, shouldSwitch;
