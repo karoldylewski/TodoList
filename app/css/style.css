@@ -1,8 +1,6 @@
 .main-window-subheader{
   text-align: center;
- /* margin-top:5px !important;*/
 }
-
 .header-row{
   background-color: rgb(245, 245, 245);
   margin-top:10px;
@@ -28,7 +26,6 @@
 .btn-new-task{
   margin:10px;
 }
-
 .task-low {
   background: rgba(0,250,0,0.5);
 }
@@ -38,4 +35,11 @@
 .task-high {
   background: rgba(250,0,0,0.5);
 }
-
+.center-content{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btns-json button{
+  margin:4px;
+}
