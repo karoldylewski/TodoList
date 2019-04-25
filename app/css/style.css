@@ -24,21 +24,25 @@
   margin-right:20px;
 }
 .tasks .btn-sort{
-  color: unset;
+  color:black;
   background: unset;
   margin-left:20px;
   padding:3px;
 }
+.tasks .btn-sort:hover{
+  color:white;
+  background: #1ABC9C;
+}
 .btn-new-task{
   margin:10px;
 }
-.task-low span{
+.task-low .fui-info-circle{
   color: #2ECC71;
 }
-.task-medium span{
+.task-medium .fui-info-circle{
   color: #F1C40F;
 }
-.task-high span{
+.task-high .fui-info-circle{
   color: #E74C3C;
 }
 .center-content{
@@ -70,4 +74,7 @@
 }
 .btn{
   font-size: 16px;
+}
+.table-col-delete{
+  width:10%;
 }

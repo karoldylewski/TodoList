@@ -1,8 +1,10 @@
 const charsetEncoding = 'data:text/json;charset=utf-8,';
 const nameEmptyAlert = 'Name must be filled out!';
 const downloadFileName = 'task.json';
+const deleteMessage = 'Are you sure to delete this task?';
 const tableIndexToAppend = -1;
 const priorityMark = "<span class='fui-info-circle'> </span>";
+const trashBinMark ="<span class='fui-trash btn btn-primary btn-sort btn-delete-task'> </span>";
 const btnSaveToFile = document.getElementById("btn-save-to-file").addEventListener("click", prepareFileToDownload);
 const btnNewTask = document.getElementById("new-task-submit").addEventListener("click", submitNewTask);
 const sortByName = document.getElementById("task-name-sort").addEventListener("click", function(){
@@ -29,6 +31,12 @@ function submitNewTask(){
 function onPageLoaded(){
   let tasksKeysFromLocalStorage = loadDataFromLocalStorage();
   populateTable(tasksKeysFromLocalStorage);
+  $(".btn-delete-task").click(function() {
+    const confirmResult = confirm(deleteMessage);
+    if (confirmResult) {
+      deleteTask(this.id);
+    }
+  });
 }
 function prepareFileToDownload(){
   let tasksObject = [];
@@ -64,16 +72,19 @@ function populateTable(data){
 function fetchTask(element, index, array){
   const retrievedTask = localStorage.getItem(element);
   const parsedTask = JSON.parse(retrievedTask);
-  appendToTable(parsedTask);
+  appendToTable(parsedTask,element);
 }
-function appendToTable(parsedTask){
+function appendToTable(parsedTask,taskKey){
   const taskTable = document.getElementById('task-table-body');
   const row = taskTable.insertRow(tableIndexToAppend);
   const taskNameCell = row.insertCell(tableIndexToAppend);
   const taskPriorityCell = row.insertCell(tableIndexToAppend);
+  const taskBinCell = row.insertCell(tableIndexToAppend);
   row.classList.add('task-'+parsedTask.priority.toLowerCase());
   taskNameCell.innerHTML = parsedTask.name;
   taskPriorityCell.innerHTML = priorityMark+parsedTask.priority;
+  taskBinCell.innerHTML = trashBinMark;
+  taskBinCell.firstChild.setAttribute("id", taskKey);
 }
 function updateTaskList(taskName){
   let storedKeys = localStorage.getItem('taskNames');
@@ -162,4 +173,16 @@ function sortTable(column) {
       switching = true;
     }
   }
+}
+function deleteTask(id){
+  localStorage.removeItem(id)
+  let storedKeys = localStorage.getItem('taskNames');
+  let storedKeysArray = storedKeys.split(',');
+  if (storedKeysArray.length == 1){
+    localStorage.removeItem('taskNames');
+  }else{
+    storedKeysArray.splice( storedKeysArray.indexOf(id), 1 );
+    localStorage.setItem('taskNames', storedKeysArray);
+  }
+  location.reload();
 }
