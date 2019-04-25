@@ -1,33 +1,72 @@
+const charsetEncoding = 'data:text/json;charset=utf-8,';
+const nameEmptyAlert = 'Name must be filled out!';
+const downloadFileName = 'task.json';
+const btnSaveToFile = document.getElementById("btn-save-to-file").addEventListener("click", prepareFileToDownload);
+const btnNewTask = document.getElementById("new-task-submit").addEventListener("click", submitNewTask);
+const loaded = document.addEventListener("DOMContentLoaded", onPageLoaded)
 $("select").select2({dropdownCssClass: 'dropdown-inverse'});
+$('#btn-load-from-file').on('click', function(event) {
+  openFile(saveFromFile);
+});
 
-$('#new-task-submit').on('click', function(event) {
- if (validateForm()){
+function submitNewTask(){
+  if (validateForm()){
     let task={
       name:document.getElementById("new-task-name").value,
       priority:document.getElementById("new-task-priority").value
     }
-    let taskKey = generateTaskName();
-    updateTaskList(taskKey);
-    localStorage.setItem(taskKey, JSON.stringify(task));
+    submitTask(task);
     location.reload();
- }
-});
-
-$( document ).ready(function() {
+  }
+}
+function onPageLoaded(){
+  let tasksKeysFromLocalStorage = loadDataFromLocalStorage();
+  populateTable(tasksKeysFromLocalStorage);
+}
+function prepareFileToDownload(){
+  let tasksObject = [];
+  let tasksKeysFromLocalStorage = loadDataFromLocalStorage();
+  if (tasksKeysFromLocalStorage !== null) {
+    let tasksKeys = tasksKeysFromLocalStorage.split(',');
+    tasksKeys.forEach(function (element) {
+      const retrievedTask = localStorage.getItem(element);
+      const parsedTask = JSON.parse(retrievedTask);
+      tasksObject.push(parsedTask);
+    });
+  }
+  let dataToDownload = charsetEncoding + encodeURIComponent(JSON.stringify(tasksObject));
+  let dlAnchorElem = document.getElementById('btn-save-to-file');
+  dlAnchorElem.setAttribute("href",     dataToDownload     );
+  dlAnchorElem.setAttribute("download", downloadFileName);
+}
+function submitTask(element){
+  const taskKey = generateTaskName();
+  updateTaskList(taskKey);
+  localStorage.setItem(taskKey, JSON.stringify(element));
+}
+function loadDataFromLocalStorage(){
   let data = localStorage.getItem('taskNames');
+  return data;
+}
+function populateTable(data){
   if (data !== null){
     let tasksKeys = data.split(',');
     tasksKeys.forEach(fetchTask);
   }
-});
+}
 function fetchTask(element, index, array){
   const retrievedTask = localStorage.getItem(element);
   const parsedTask = JSON.parse(retrievedTask);
-  $('#task-table > tbody:last-child').append('<tr class=task-'+parsedTask.priority.toLowerCase()+'>\n' +
-    '          <td>'+parsedTask.name+'</td>\n' +
-    '          <td>'+parsedTask.priority+'</td>\n' +
-    '        </tr>');
-
+  appendToTable(parsedTask);
+}
+function appendToTable(parsedTask){
+  const taskTable = document.getElementById('task-table');
+  const row = taskTable.insertRow(-1);
+  const taskNameCell = row.insertCell(-1);
+  const taskNPriorityell = row.insertCell(-1);
+  row.classList.add('task-'+parsedTask.priority.toLowerCase());
+  taskNameCell.innerHTML = parsedTask.name;
+  taskNPriorityell.innerHTML = parsedTask.priority;
 }
 function updateTaskList(taskName){
   let storedKeys = localStorage.getItem('taskNames');
@@ -42,7 +81,6 @@ function updateTaskList(taskName){
   }
   localStorage.setItem('taskNames', storedKeys);
 }
-
 function generateTaskName(){
   let currentTime = new Date();
   let key = currentTime.getFullYear().toString()+
@@ -51,15 +89,48 @@ function generateTaskName(){
     currentTime.getHours().toString()+
     currentTime.getMinutes().toString()+
     currentTime.getSeconds().toString()+
-    currentTime.getMilliseconds().toString();
+    currentTime.getMilliseconds().toString()+
+  Math.random();
   return key;
 }
 function validateForm() {
-  var nameInput = document.forms["new-task-form"]["new-task"].value;
+  let nameInput = document.forms["new-task-form"]["new-task"].value;
   if (nameInput == "") {
-    alert("Name must be filled out!");
+    alert(nameEmptyAlert);
     return false;
   }else{
     return true;
   }
+}
+function saveFromFile(contents) {
+  const parsedTasks = JSON.parse(contents);
+  parsedTasks.forEach(submitTask);
+  location.reload();
+}
+function clickElem(elem) {
+  const eventMouse = document.createEvent("MouseEvents");
+  eventMouse.initMouseEvent("click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+  elem.dispatchEvent(eventMouse);
+}
+function openFile(func) {
+  readFile = function(e) {
+    const file = e.target.files[0];
+    if (!file) {
+      return;
+    }
+    let reader = new FileReader();
+    reader.onload = function(e) {
+      let contents = e.target.result;
+      fileInput.func(contents);
+      document.body.removeChild(fileInput)
+    };
+    reader.readAsText(file)
+  };
+  fileInput = document.createElement("input");
+  fileInput.type='file';
+  fileInput.style.display='none';
+  fileInput.onchange=readFile;
+  fileInput.func=func;
+  document.body.appendChild(fileInput);
+  clickElem(fileInput);
 }
