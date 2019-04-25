@@ -1,14 +1,20 @@
 const charsetEncoding = 'data:text/json;charset=utf-8,';
 const nameEmptyAlert = 'Name must be filled out!';
 const downloadFileName = 'task.json';
+const tableIndexToAppend = -1;
 const btnSaveToFile = document.getElementById("btn-save-to-file").addEventListener("click", prepareFileToDownload);
 const btnNewTask = document.getElementById("new-task-submit").addEventListener("click", submitNewTask);
+const sortByName = document.getElementById("task-name-sort").addEventListener("click", function(){
+  sortTable(0);
+}, false);
+const sortByPriority = document.getElementById("task-priority-sort").addEventListener("click", function(){
+  sortTable(1);
+}, false);
+const loadFromFile = document.getElementById("btn-load-from-file").addEventListener("click", function(){
+  openFile(saveFromFile);
+}, false);
 const loaded = document.addEventListener("DOMContentLoaded", onPageLoaded)
 $("select").select2({dropdownCssClass: 'dropdown-inverse'});
-$('#btn-load-from-file').on('click', function(event) {
-  openFile(saveFromFile);
-});
-
 function submitNewTask(){
   if (validateForm()){
     let task={
@@ -61,12 +67,12 @@ function fetchTask(element, index, array){
 }
 function appendToTable(parsedTask){
   const taskTable = document.getElementById('task-table');
-  const row = taskTable.insertRow(-1);
-  const taskNameCell = row.insertCell(-1);
-  const taskNPriorityell = row.insertCell(-1);
+  const row = taskTable.insertRow(tableIndexToAppend);
+  const taskNameCell = row.insertCell(tableIndexToAppend);
+  const taskPriorityCell = row.insertCell(tableIndexToAppend);
   row.classList.add('task-'+parsedTask.priority.toLowerCase());
   taskNameCell.innerHTML = parsedTask.name;
-  taskNPriorityell.innerHTML = parsedTask.priority;
+  taskPriorityCell.innerHTML = parsedTask.priority;
 }
 function updateTaskList(taskName){
   let storedKeys = localStorage.getItem('taskNames');
@@ -133,4 +139,26 @@ function openFile(func) {
   fileInput.func=func;
   document.body.appendChild(fileInput);
   clickElem(fileInput);
+}
+function sortTable(column) {
+  let table, rows, switching, i, x, y, shouldSwitch;
+  table = document.getElementById("task-table");
+  switching = true;
+  while (switching) {
+    switching = false;
+    rows = table.rows;
+    for (i = 1; i < (rows.length - 1); i++) {
+      shouldSwitch = false;
+      x = rows[i].getElementsByTagName("TD")[column];
+      y = rows[i + 1].getElementsByTagName("TD")[column];
+      if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+        shouldSwitch = true;
+        break;
+      }
+    }
+    if (shouldSwitch) {
+      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+      switching = true;
+    }
+  }
 }
