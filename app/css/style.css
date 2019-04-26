@@ -78,3 +78,29 @@
 .table-col-delete{
   width:10%;
 }
+.new-task-bar{
+}
+.inline{
+  display: inline-block;
+}
+.fake-modal-header{
+  margin:auto;
+  padding:10px;
+}
+.fake-modal-footer{
+  background: #ECF0F1;
+}
+.fake-modal-footer .btn-fake-modal-dismiss{
+  float: right;
+  margin: 10px;
+}
+.fake-modal-footer .btn-fake-modal-add-task{
+  float: right;
+  margin-top: 10px;
+}
+.fake-modal-body .row{
+  margin-bottom: 10px;
+}
+.btn-fake-object{
+  margin-top:10px;
+}

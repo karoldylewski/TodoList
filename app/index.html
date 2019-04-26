@@ -1,68 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>TODO List</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="css/vendor/bootstrap.min.css" rel="stylesheet">
-    <link href="css/flat-ui.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
-  </head>
-  <body>
-  <div class="container-fluid main-window">
-    <div class="row header-row">
-      <div class="col-md-12">
-        <div class="text-center header-text">
-          TODO List
-        </div>
-        <div class="text-center sub-header-text">
-          Easy task management
-        </div>
+<head>
+  <meta charset="utf-8">
+  <title>TODO List</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="css/vendor/bootstrap.min.css" rel="stylesheet">
+  <link href="css/flat-ui.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+<div class="container-fluid main-window">
+  <div class="row header-row">
+    <div class="col-md-12">
+      <div class="text-center header-text">
+        TODO List
       </div>
-    </div>
-    <div class="row sub-row">
-      <div class="col-md-12">
-        <form class="form-inline input-form" name="new-task-form">
-          <span class="new-task-bar-label"> Task Name: </span>
-          <div>
-            <input type="text" placeholder="Type task name" class="form-control" id="new-task-name" name="new-task"/>
-          </div>
-          <span class="new-task-bar-label">  Priority: </span>
-          <select class="form-control select select-primary select-block" id="new-task-priority">
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-          </select>
-          <button class="form-control btn btn-hg btn-primary btn-new-task" id="new-task-submit">
-            <span class="fui-plus-circle" ></span>
-          </button>
-        </form>
-      </div>
-    </div>
-    <div class="row task-table-row">
-     <table class="table table-striped tasks table-sm" id="task-table">
-        <thead>
-        <tr>
-          <th scope="col">Task Name<span class="fui-triangle-down btn btn-primary btn-sort" id="task-name-sort"></span></th>
-          <th scope="col">Priority<span class="fui-triangle-down btn btn-primary btn-sort" id="task-priority-sort"></span></th>
-          <th scope="col" class="table-col-delete"></th>
-        </tr>
-        </thead>
-        <tbody id="task-table-body">
-        </tbody>
-      </table>
-    </div>
-    <div class="row btns-json-row">
-      <div class="col-md-12 center-content btns-json">
-        <a href="#" class="btn btn-primary" id="btn-save-to-file">Save to file</a>
-        <button class="btn btn-info" id="btn-load-from-file">Load from file</button>
+      <div class="text-center sub-header-text">
+        Easy task management
       </div>
     </div>
   </div>
-    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/popper.js@1.14.1/dist/umd/popper.min.js" crossorigin="anonymous"></script>
-    <script src="http://vjs.zencdn.net/6.6.3/video.js"></script>
-    <script src="scripts/flat-ui.js"></script>
-    <script src="scripts/transform-ui.js"></script>
-  </body>
+  <div class="row sub-row">
+    <div class="col-md-12">
+      <div class="new-task-bar">
+        <div class="row">
+          <div class="col-md-10">
+            <form class="form-inline" name="new-task-form">
+              <span class="new-task-bar-label"> Task Name: </span>
+              <input type="text" placeholder="Type task name" class="form-control" id="new-task-name" name="new-task"/>
+              <span class="new-task-bar-label">  Priority: </span>
+              <select class="form-control select select-primary select-block" id="new-task-priority">
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+              <button class="form-control btn btn-hg btn-primary btn-new-task inline" id="new-task-submit">
+                <span class="fui-plus-circle"></span>
+              </button>
+            </form>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-primary btn-fake-object" id="btn-fake-modal" data-toggle="modal" data-target="#fake-object-modal">
+              Add fake object
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row task-table-row">
+    <table class="table table-striped tasks table-sm" id="task-table">
+      <thead>
+      <tr>
+        <th scope="col">Task Name
+          <span class="fui-triangle-down btn btn-primary btn-sort" id="task-name-sort"></span>
+          <span class="fui-triangle-up btn btn-primary btn-sort" id="task-name-sort-desc"></span>
+        </th>
+        <th scope="col">Priority
+          <span class="fui-triangle-down btn btn-primary btn-sort" id="task-priority-sort"></span>
+          <span class="fui-triangle-up btn btn-primary btn-sort" id="task-priority-sort-desc"></span>
+        </th>
+        <th scope="col" class="table-col-delete"></th>
+      </tr>
+      </thead>
+      <tbody id="task-table-body">
+      </tbody>
+    </table>
+  </div>
+  <div class="row btns-json-row">
+    <div class="col-md-12 center-content btns-json">
+      <a href="#" class="btn btn-primary" id="btn-save-to-file">Save to file</a>
+      <button class="btn btn-info" id="btn-load-from-file">Load from file</button>
+    </div>
+  </div>
+</div>
+<div id="fake-object-modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header fake-modal-header">
+        Choose object:
+      </div>
+      <div class="fake-modal-body modal-body">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-md-3">
+              Type:
+            </div>
+            <div class="col-md-5">
+              <select class="select select-primary select-block" id="new-fetch-type">
+                <option disabled selected value="">Please select value</option>
+                <option value="posts">Posts</option>
+                <option value="todos">Todos</option>
+                <option value="comments">Comments</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-3">
+              Object:
+            </div>
+            <div class="col-md-8">
+              <select class="select select-primary select-block" id="fake-objects" name="fobjects">
+              </select>
+            </div>
+            <div class="col-md-1">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="fake-modal-footer">
+        <button type="button" class="btn btn-default btn-fake-modal-dismiss" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary btn-fake-modal-add-task" data-dismiss="modal" id="btn-fake-add-task">Add Task</button>
+    </div>
+    </div>
+  </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/popper.js@1.14.1/dist/umd/popper.min.js" crossorigin="anonymous"></script>
+<script src="http://vjs.zencdn.net/6.6.3/video.js"></script>
+<script src="scripts/flat-ui.js"></script>
+<script src="scripts/transform-ui.js"></script>
+</body>
 </html>
