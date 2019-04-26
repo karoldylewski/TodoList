@@ -9,7 +9,8 @@
   <link href="css/style.css" rel="stylesheet">
 </head>
 <body>
-<div class="container-fluid main-window">
+</div>
+<div class="container-fluid main-window" id="main-app-window">
   <div class="row header-row">
     <div class="col-md-12">
       <div class="text-center header-text">
@@ -20,100 +21,137 @@
       </div>
     </div>
   </div>
-  <div class="row sub-row">
-    <div class="col-md-12">
-      <div class="new-task-bar">
-        <div class="row">
-          <div class="col-md-10">
-            <form class="form-inline" name="new-task-form">
-              <span class="new-task-bar-label"> Task Name: </span>
-              <input type="text" placeholder="Type task name" class="form-control" id="new-task-name" name="new-task"/>
-              <span class="new-task-bar-label">  Priority: </span>
-              <select class="form-control select select-primary select-block" id="new-task-priority">
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-              </select>
-              <button class="form-control btn btn-hg btn-primary btn-new-task inline" id="new-task-submit">
-                <span class="fui-plus-circle"></span>
+  <div class="container" id="login-app-window">
+    <div class="row">
+    </div>
+    <div class="row login-input-row">
+      <div class="col-md-4">
+      </div>
+      <div class="col-md-4">
+        <div class="alert alert-danger text-center hidden" id="alert-warning-login">
+          <strong>Warning!</strong> User not authorized.
+        </div>
+        <div class="alert alert-success text-center hidden" id="alert-success-new-account">
+          <strong>Success!</strong> New account created.
+        </div>
+        <div class="login-form">
+          <div class="form-group">
+            <input type="text" class="form-control login-field" value="" placeholder="Enter your name" id="login-name"/>
+            <label class="login-field-icon fui-user" for="login-name"></label>
+          </div>
+          <div class="form-group">
+            <input type="password" class="form-control login-field" value="" placeholder="Password" id="login-pass"/>
+            <label class="login-field-icon fui-lock" for="login-pass"></label>
+          </div>
+          <button class="btn btn-primary btn-lg btn-block" id="btn-login">Log in</button>
+          <a class="login-link" href="#" id="btn-new-account">Override with new account</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+      </div>
+    </div>
+
+  </div>
+  <div id="app-content">
+    <div class="row sub-row">
+      <div class="col-md-12">
+        <div class="new-task-bar">
+          <div class="row">
+            <div class="col-md-10">
+              <form class="form-inline" name="new-task-form">
+                <span class="new-task-bar-label"> Task Name: </span>
+                <input type="text" placeholder="Type task name" class="form-control" id="new-task-name"
+                       name="new-task"/>
+                <span class="new-task-bar-label">  Priority: </span>
+                <select class="form-control select select-primary select-block" id="new-task-priority">
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+                <button class="btn btn-hg btn-primary btn-new-task inline" type="button" id="new-task-submit">
+                  <span class="fui-plus-circle"></span>
+                </button>
+              </form>
+            </div>
+            <div class="col-md-2">
+              <button class="btn btn-primary btn-fake-object" id="btn-fake-modal" data-toggle="modal"
+                      data-target="#fake-object-modal">
+                Add fake object
               </button>
-            </form>
-          </div>
-          <div class="col-md-2">
-            <button class="btn btn-primary btn-fake-object" id="btn-fake-modal" data-toggle="modal" data-target="#fake-object-modal">
-              Add fake object
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="row task-table-row">
-    <table class="table table-striped tasks table-sm" id="task-table">
-      <thead>
-      <tr>
-        <th scope="col">Task Name
-          <span class="fui-triangle-down btn btn-primary btn-sort" id="task-name-sort"></span>
-          <span class="fui-triangle-up btn btn-primary btn-sort" id="task-name-sort-desc"></span>
-        </th>
-        <th scope="col">Priority
-          <span class="fui-triangle-down btn btn-primary btn-sort" id="task-priority-sort"></span>
-          <span class="fui-triangle-up btn btn-primary btn-sort" id="task-priority-sort-desc"></span>
-        </th>
-        <th scope="col" class="table-col-delete"></th>
-      </tr>
-      </thead>
-      <tbody id="task-table-body">
-      </tbody>
-    </table>
-  </div>
-  <div class="row btns-json-row">
-    <div class="col-md-12 center-content btns-json">
-      <a href="#" class="btn btn-primary" id="btn-save-to-file">Save to file</a>
-      <button class="btn btn-info" id="btn-load-from-file">Load from file</button>
-    </div>
-  </div>
-</div>
-<div id="fake-object-modal" class="modal fade" role="dialog">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header fake-modal-header">
-        Choose object:
-      </div>
-      <div class="fake-modal-body modal-body">
-        <div class="container-fluid">
-          <div class="row">
-            <div class="col-md-3">
-              Type:
-            </div>
-            <div class="col-md-5">
-              <select class="select select-primary select-block" id="new-fetch-type">
-                <option disabled selected value="">Please select value</option>
-                <option value="posts">Posts</option>
-                <option value="todos">Todos</option>
-                <option value="comments">Comments</option>
-              </select>
-            </div>
-            <div class="col-md-4">
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-3">
-              Object:
-            </div>
-            <div class="col-md-8">
-              <select class="select select-primary select-block" id="fake-objects" name="fobjects">
-              </select>
-            </div>
-            <div class="col-md-1">
             </div>
           </div>
         </div>
       </div>
-      <div class="fake-modal-footer">
-        <button type="button" class="btn btn-default btn-fake-modal-dismiss" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary btn-fake-modal-add-task" data-dismiss="modal" id="btn-fake-add-task">Add Task</button>
     </div>
+    <div class="row task-table-row">
+      <table class="table table-striped tasks table-sm" id="task-table">
+        <thead>
+        <tr>
+          <th scope="col">Task Name
+            <span class="fui-triangle-down btn btn-primary btn-sort" id="task-name-sort"></span>
+            <span class="fui-triangle-up btn btn-primary btn-sort" id="task-name-sort-desc"></span>
+          </th>
+          <th scope="col">Priority
+            <span class="fui-triangle-down btn btn-primary btn-sort" id="task-priority-sort"></span>
+            <span class="fui-triangle-up btn btn-primary btn-sort" id="task-priority-sort-desc"></span>
+          </th>
+          <th scope="col" class="table-col-delete"></th>
+        </tr>
+        </thead>
+        <tbody id="task-table-body">
+        </tbody>
+      </table>
+    </div>
+    <div class="row btns-json-row">
+      <div class="col-md-12 center-content btns-json">
+        <a href="#" class="btn btn-primary" id="btn-save-to-file">Save to file</a>
+        <button class="btn btn-info" id="btn-load-from-file">Load from file</button>
+      </div>
+    </div>
+  </div>
+  <div id="fake-object-modal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header fake-modal-header">
+          Choose object:
+        </div>
+        <div class="fake-modal-body modal-body">
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-3">
+                Type:
+              </div>
+              <div class="col-md-5">
+                <select class="select select-primary select-block" id="new-fetch-type">
+                  <option disabled selected value="">Select</option>
+                  <option value="posts">Posts</option>
+                  <option value="todos">Todos</option>
+                  <option value="comments">Comments</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-3">
+                Object:
+              </div>
+              <div class="col-md-8">
+                <select class="select select-primary select-block" id="fake-objects" name="fobjects">
+                </select>
+              </div>
+              <div class="col-md-1">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="fake-modal-footer">
+          <button type="button" class="btn btn-default btn-fake-modal-dismiss" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary btn-fake-modal-add-task" data-dismiss="modal"
+                  id="btn-fake-add-task">Add Task
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

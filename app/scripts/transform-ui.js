@@ -2,16 +2,21 @@ const charsetEncoding = 'data:text/json;charset=utf-8,';
 const nameEmptyAlert = 'Name must be filled out!';
 const downloadFileName = 'task.json';
 const deleteMessage = 'Are you sure to delete this task?';
+const newAccountMessage = 'Are you sure to create new account?';
 const dataFetchApi = 'https://jsonplaceholder.typicode.com/';
 const fakeObjectDefaultPriority = 'Low';
 const objectNotSelected = 'Object is not selected!';
 const dropdownDefaultValue = '<option disabled selected value="">Select</option>'
 const tableIndexToAppend = -1;
 const numberOfRecordsToFetchFromApi = 10;
+const alertPasswordNeedLowerCaseChar = 'Your password needs a lower case letter';
+const alertPasswordNeedUpperCaseChar = 'Your password needs a upper case letter';
 const priorityMark = "<span class='fui-info-circle'> </span>";
 const trashBinMark = "<span class='fui-trash btn btn-primary btn-sort btn-delete-task'> </span>";
 const btnSaveToFile = document.getElementById("btn-save-to-file").addEventListener("click", prepareFileToDownload);
 const btnNewTask = document.getElementById("new-task-submit").addEventListener("click", submitNewTask);
+const btnLogin = document.getElementById("btn-login").addEventListener("click", requestLogin);
+const btnCreateAccount = document.getElementById("btn-new-account").addEventListener("click", createAccount);
 const sortByName = document.getElementById("task-name-sort").addEventListener("click", function () {
   sortTable(0, 'asc');
 }, false);
@@ -28,7 +33,7 @@ const loadFromFile = document.getElementById("btn-load-from-file").addEventListe
   openFile(parseJsonTasksToObject);
 }, false);
 const saveFakeObject = document.getElementById("btn-fake-add-task").addEventListener("click", saveFakeTask);
-const loaded = document.addEventListener("DOMContentLoaded", onPageLoaded)
+const loaded = document.addEventListener("DOMContentLoaded", onPageLoaded);
 $("select").select2({dropdownCssClass: 'dropdown-inverse'});
 $('#new-fetch-type').on('change', function (e) {
   fetchFakeObjects($(this).val());
@@ -40,15 +45,15 @@ function submitNewTask() {
       name: document.getElementById("new-task-name").value,
       priority: document.getElementById("new-task-priority").value
     }
+    document.getElementById('new-task-name').value = '';
+    $("#new-task-priority").select2("val", "Low");
     submitTask(task);
-    location.reload();
+    reloadTableBody();
   }
 }
 
 function onPageLoaded() {
-  let tasksKeysFromLocalStorage = loadDataFromLocalStorage();
-  populateTable(tasksKeysFromLocalStorage);
-  $(".btn-delete-task").click(function () {
+  $(document).delegate('.btn-delete-task', 'click', function () {
     const confirmResult = confirm(deleteMessage);
     if (confirmResult) {
       deleteTask(this.id);
@@ -138,7 +143,6 @@ function generateTaskName() {
 }
 
 function validateForm(input) {
-  console.log(input);
   if (input == 'undefined') {
     alert(objectNotSelected);
   } else {
@@ -149,13 +153,12 @@ function validateForm(input) {
       return true;
     }
   }
-
 }
 
 function parseJsonTasksToObject(contents) {
   const parsedTasks = JSON.parse(contents);
   parsedTasks.forEach(submitTask);
-  location.reload();
+  reloadTableBody();
 }
 
 function openFileMouseEventHandler(elem) {
@@ -233,7 +236,7 @@ function deleteTask(id) {
     storedKeysArray.splice(storedKeysArray.indexOf(id), 1);
     localStorage.setItem('taskNames', storedKeysArray);
   }
-  location.reload();
+  reloadTableBody();
 }
 
 function getRandomIndex(max) {
@@ -294,6 +297,71 @@ function saveFakeTask(object) {
       priority: fakeObjectDefaultPriority
     }
     submitTask(task);
-    location.reload();
+    reloadTableBody();
   }
+  $("#new-fetch-type").select2("val", "");
+  $("#fake-objects").empty().select2("val", "");
+}
+
+function requestLogin() {
+  $('#alert-warning-login').hide();
+  let user = {
+    userLogin: document.getElementById('login-name').value,
+    userPassword: document.getElementById('login-pass').value
+  }
+  authenticateUser(user);
+}
+
+function authenticateUser(user) {
+  const userWithPrivileges = localStorage.getItem('credentials');
+  if (userWithPrivileges !== null) {
+    const parsedUserWithPrivileges = JSON.parse(userWithPrivileges);
+    if (parsedUserWithPrivileges.userLogin == user.userLogin && parsedUserWithPrivileges.userPassword == user.userPassword) {
+      $('#app-content').show();
+      $('#login-app-window').hide();
+      reloadTableBody();
+    } else {
+      userNotAuthorized();
+    }
+  } else {
+    userNotAuthorized();
+  }
+}
+
+function reloadTableBody() {
+  $("#task-table-body").empty();
+  let tasksKeysFromLocalStorage = loadDataFromLocalStorage();
+  populateTable(tasksKeysFromLocalStorage);
+}
+
+function createAccount() {
+  const confirmResult = confirm(newAccountMessage);
+  if (confirmResult) {
+    let user = {
+      userLogin: document.getElementById('login-name').value,
+      userPassword: document.getElementById('login-pass').value
+    }
+    if (user.userPassword.search(/[a-z]/) < 0) {
+      alert(alertPasswordNeedLowerCaseChar);
+    } else if (user.userPassword.search(/[A-Z]/) < 0) {
+      alert(alertPasswordNeedUpperCaseChar);
+    }else{
+      const parsedUser = JSON.stringify(user);
+      localStorage.setItem('credentials', parsedUser);
+      const inMemoryTasks = localStorage.getItem('taskNames');
+      if (inMemoryTasks !== null) {
+        let parsedInMemoryTasks = inMemoryTasks.split(',');
+        parsedInMemoryTasks.forEach(function (task) {
+          localStorage.removeItem(task);
+        });
+        localStorage.removeItem('taskNames');
+      }
+      $('#alert-warning-login').hide();
+      $('#alert-success-new-account').fadeIn('slow');
+    }
+  }
+}
+
+function userNotAuthorized() {
+  $('#alert-warning-login').fadeIn('slow');
 }
