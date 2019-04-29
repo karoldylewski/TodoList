@@ -13,355 +13,366 @@ const alertPasswordNeedLowerCaseChar = 'Your password needs a lower case letter'
 const alertPasswordNeedUpperCaseChar = 'Your password needs a upper case letter';
 const priorityMark = "<span class='fui-info-circle'> </span>";
 const trashBinMark = "<span class='fui-trash btn btn-primary btn-sort btn-delete-task'> </span>";
-const btnSaveToFile = document.getElementById("btn-save-to-file").addEventListener("click", prepareFileToDownload);
-const btnNewTask = document.getElementById("new-task-submit").addEventListener("click", submitNewTask);
-const btnLogin = document.getElementById("btn-login").addEventListener("click", requestLogin);
-const btnCreateAccount = document.getElementById("btn-new-account").addEventListener("click", createAccount);
-const sortByName = document.getElementById("task-name-sort").addEventListener("click", function () {
-  sortTable(0, 'asc');
-}, false);
-const sortByPriority = document.getElementById("task-priority-sort").addEventListener("click", function () {
-  sortTable(1, 'asc');
-}, false);
-const sortByNameDesc = document.getElementById("task-name-sort-desc").addEventListener("click", function () {
-  sortTable(0, 'desc');
-}, false);
-const sortByPriorityDesc = document.getElementById("task-priority-sort-desc").addEventListener("click", function () {
-  sortTable(1, 'desc');
-}, false);
-const loadFromFile = document.getElementById("btn-load-from-file").addEventListener("click", function () {
-  openFile(parseJsonTasksToObject);
-}, false);
-const saveFakeObject = document.getElementById("btn-fake-add-task").addEventListener("click", saveFakeTask);
-const loaded = document.addEventListener("DOMContentLoaded", onPageLoaded);
 $("select").select2({dropdownCssClass: 'dropdown-inverse'});
 $('#new-fetch-type').on('change', function (e) {
-  fetchFakeObjects($(this).val());
+  apiHandle.fetchFakeObjects($(this).val());
 });
 
-function submitNewTask() {
-  if (validateForm(document.getElementById("new-task-name").value)) {
-    let task = {
-      name: document.getElementById("new-task-name").value,
-      priority: document.getElementById("new-task-priority").value
+const storageManagement = {
+  loadDataFromLocalStorage: function () {
+    let data = localStorage.getItem('taskNames');
+    return data;
+  },
+  deleteTask: function (id) {
+    localStorage.removeItem(id)
+    let storedKeys = localStorage.getItem('taskNames');
+    let storedKeysArray = storedKeys.split(',');
+    if (storedKeysArray.length == 1) {
+      localStorage.removeItem('taskNames');
+    } else {
+      storedKeysArray.splice(storedKeysArray.indexOf(id), 1);
+      localStorage.setItem('taskNames', storedKeysArray);
     }
-    document.getElementById('new-task-name').value = '';
-    $("#new-task-priority").select2("val", "Low");
-    submitTask(task);
-    reloadTableBody();
+    tableManagement.reloadTableBody();
+  },
+  updateTaskList: function (taskName) {
+    let storedKeys = localStorage.getItem('taskNames');
+    if (storedKeys == null) {
+      let storedKeysArray = [];
+      storedKeysArray.push(taskName);
+      storedKeys = storedKeysArray;
+    } else {
+      let storedKeysArray = storedKeys.split(',');
+      storedKeysArray.push(taskName);
+      storedKeys = storedKeysArray;
+    }
+    localStorage.setItem('taskNames', storedKeys);
+  },
+  fetchTask: function (element, index, array) {
+    const retrievedTask = localStorage.getItem(element);
+    const parsedTask = JSON.parse(retrievedTask);
+    tableManagement.appendToTable(parsedTask, element);
+  },
+  parseJsonTasksToObject: function (contents) {
+    const parsedTasks = JSON.parse(contents);
+    parsedTasks.forEach(storageManagement.submitTask);
+    tableManagement.reloadTableBody();
+  },
+  submitTask: function (element) {
+    const taskKey = taskManagement.generateTaskName();
+    storageManagement.updateTaskList(taskKey);
+    localStorage.setItem(taskKey, JSON.stringify(element));
+  },
+};
+
+const identityManagement = {
+  requestLogin: function () {
+    $('#alert-warning-login').hide();
+    let user = {
+      userLogin: document.getElementById('login-name').value,
+      userPassword: document.getElementById('login-pass').value
+    }
+    identityManagement.authenticateUser(user);
+  },
+  authenticateUser: function (user) {
+    const userWithPrivileges = localStorage.getItem('credentials');
+    if (userWithPrivileges !== null) {
+      const parsedUserWithPrivileges = JSON.parse(userWithPrivileges);
+      if (parsedUserWithPrivileges.userLogin == user.userLogin && parsedUserWithPrivileges.userPassword == user.userPassword) {
+        $('#app-content').show();
+        $('#login-app-window').hide();
+        tableManagement.reloadTableBody();
+      } else {
+        identityManagement.userNotAuthorized();
+      }
+    } else {
+      identityManagement.userNotAuthorized();
+    }
+  },
+  createAccount: function () {
+    const confirmResult = confirm(newAccountMessage);
+    if (confirmResult) {
+      let user = {
+        userLogin: document.getElementById('login-name').value,
+        userPassword: document.getElementById('login-pass').value
+      }
+      if (user.userPassword.search(/[a-z]/) < 0) {
+        alert(alertPasswordNeedLowerCaseChar);
+      } else if (user.userPassword.search(/[A-Z]/) < 0) {
+        alert(alertPasswordNeedUpperCaseChar);
+      } else {
+        const parsedUser = JSON.stringify(user);
+        localStorage.setItem('credentials', parsedUser);
+        const inMemoryTasks = localStorage.getItem('taskNames');
+        if (inMemoryTasks !== null) {
+          let parsedInMemoryTasks = inMemoryTasks.split(',');
+          parsedInMemoryTasks.forEach(function (task) {
+            localStorage.removeItem(task);
+          });
+          localStorage.removeItem('taskNames');
+        }
+        $('#alert-warning-login').hide();
+        $('#alert-success-new-account').fadeIn('slow');
+      }
+    }
+  },
+  userNotAuthorized: function () {
+    $('#alert-warning-login').fadeIn('slow');
   }
-}
+};
+
+const tableManagement = {
+  sortTable: function (column, direction) {
+    let table, rows, switching, i, x, y, shouldSwitch, shouldBreak;
+    table = document.getElementById("task-table");
+    switching = true;
+    while (switching) {
+      switching = false;
+      rows = table.rows;
+      for (i = 1; i < (rows.length - 1); i++) {
+        shouldSwitch = false;
+        shouldBreak = false;
+        x = rows[i].getElementsByTagName("TD")[column];
+        y = rows[i + 1].getElementsByTagName("TD")[column];
+        switch (direction) {
+          case "asc":
+            if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+              shouldSwitch = true;
+              shouldBreak = true;
+            }
+            break;
+          case "desc":
+            if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+              shouldSwitch = true;
+              shouldBreak = true;
+            }
+            break;
+        }
+        if (shouldBreak)
+          break;
+      }
+      if (shouldSwitch) {
+        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+        switching = true;
+      }
+    }
+  },
+  populateTable: function (data) {
+    if (data !== null) {
+      let tasksKeys = data.split(',');
+      tasksKeys.forEach(storageManagement.fetchTask);
+    }
+  },
+  creteNewCell: function (row, index) {
+    const cell = row.insertCell(index);
+    return cell;
+  },
+  prepareNewRow: function (table, index, className) {
+    const row = table.insertRow(index);
+    row.classList.add('task-' + className.toLowerCase());
+    return row;
+  },
+  appendCellValue: function (cell, value) {
+    cell.innerHTML = value;
+    return cell;
+  },
+  setCellAttribute: function (cell, attribute, attributeValue) {
+    cell.setAttribute(attribute, attributeValue);
+    return cell;
+  },
+  appendToTable: function (parsedTask, taskKey) {
+    const taskTable = document.getElementById('task-table-body');
+    const row = tableManagement.prepareNewRow(taskTable, tableIndexToAppend, parsedTask.priority);
+    const taskNameCell = tableManagement.creteNewCell(row, tableIndexToAppend);
+    const taskPriorityCell = tableManagement.creteNewCell(row, tableIndexToAppend);
+    const taskBinCell = tableManagement.creteNewCell(row, tableIndexToAppend);
+    tableManagement.appendCellValue(taskNameCell, parsedTask.name);
+    tableManagement.appendCellValue(taskPriorityCell, priorityMark + parsedTask.priority);
+    tableManagement.appendCellValue(taskBinCell, trashBinMark);
+    tableManagement.appendCellValue(taskBinCell, trashBinMark);
+    tableManagement.setCellAttribute(taskBinCell.firstChild, 'id', taskKey);
+  },
+  reloadTableBody: function () {
+    $("#task-table-body").empty();
+    let tasksKeysFromLocalStorage = storageManagement.loadDataFromLocalStorage();
+    tableManagement.populateTable(tasksKeysFromLocalStorage);
+  }
+};
+
+const taskManagement = {
+  submitNewTask: function () {
+    if (taskManagement.validateForm(document.getElementById("new-task-name").value)) {
+      let task = {
+        name: document.getElementById("new-task-name").value,
+        priority: document.getElementById("new-task-priority").value
+      }
+      document.getElementById('new-task-name').value = '';
+      $("#new-task-priority").select2("val", "Low");
+      storageManagement.submitTask(task);
+      tableManagement.reloadTableBody();
+    }
+  },
+  getRandomIndex: function (max) {
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max + 1));
+  },
+  validateForm: function (input) {
+    if (input == 'undefined') {
+      alert(objectNotSelected);
+    } else {
+      if (!input.replace(/\s/g, '').length) {
+        alert(nameEmptyAlert);
+        return false;
+      } else {
+        return true;
+      }
+    }
+  },
+  generateTaskName: function () {
+    let currentTime = new Date();
+    let key = currentTime.getFullYear().toString() +
+      currentTime.getMonth().toString() +
+      currentTime.getDate().toString() +
+      currentTime.getHours().toString() +
+      currentTime.getMinutes().toString() +
+      currentTime.getSeconds().toString() +
+      currentTime.getMilliseconds().toString() +
+      Math.random();
+    return key;
+  }
+};
+
+const fileOperations = {
+  prepareFileToDownload: function () {
+    let tasksObject = [];
+    let tasksKeysFromLocalStorage = storageManagement.loadDataFromLocalStorage();
+    if (tasksKeysFromLocalStorage !== null) {
+      let tasksKeys = tasksKeysFromLocalStorage.split(',');
+      tasksKeys.forEach(function (element) {
+        const retrievedTask = localStorage.getItem(element);
+        const parsedTask = JSON.parse(retrievedTask);
+        tasksObject.push(parsedTask);
+      });
+    }
+    let dataToDownload = charsetEncoding + encodeURIComponent(JSON.stringify(tasksObject));
+    let dlAnchorElem = document.getElementById('btn-save-to-file');
+    dlAnchorElem.setAttribute("href", dataToDownload);
+    dlAnchorElem.setAttribute("download", downloadFileName);
+  },
+  openFileMouseEventHandler: function (elem) {
+    const eventMouse = document.createEvent("MouseEvents");
+    eventMouse.initMouseEvent("click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+    elem.dispatchEvent(eventMouse);
+  },
+  openFile: function (func) {
+    readFile = function (e) {
+      const file = e.target.files[0];
+      if (!file) {
+        return;
+      }
+      let reader = new FileReader();
+      reader.onload = function (e) {
+        let contents = e.target.result;
+        fileInput.func(contents);
+        document.body.removeChild(fileInput)
+      };
+      reader.readAsText(file)
+    };
+    fileInput = document.createElement("input");
+    fileInput.type = 'file';
+    fileInput.style.display = 'none';
+    fileInput.onchange = readFile;
+    fileInput.func = func;
+    document.body.appendChild(fileInput);
+    fileOperations.openFileMouseEventHandler(fileInput);
+  }
+};
+
+const apiHandle = {
+  fetchFakeObjects: function (type) {
+    apiHandle.clearFakeObjectDropdown();
+    let randomObjectsFromApi = [];
+    fetch(dataFetchApi + type)
+      .then(response => response.json())
+      .then(json => {
+        for (let apiIterator = 0; apiIterator < numberOfRecordsToFetchFromApi; apiIterator++) {
+          let randomIndex = taskManagement.getRandomIndex(json.length);
+          $.each(json.slice(randomIndex, randomIndex + 1), function (i, data) {
+            randomObjectsFromApi.push(data);
+            apiHandle.populateFakeObjectDropdown(data, type);
+          });
+        }
+      })
+  },
+  populateFakeObjectDropdown: function (data, type) {
+    const objectDropdown = document.getElementById('fake-objects');
+    const newOption = document.createElement("option");
+    switch (type) {
+      case 'todos':
+      case 'posts':
+        newOption.text = data.title;
+        newOption.value = data.title;
+        break;
+      case 'comments':
+        newOption.text = data.name;
+        newOption.value = data.name;
+        break;
+      default:
+        newOption.text = null;
+    }
+    objectDropdown.add(newOption);
+  },
+  clearFakeObjectDropdown: function () {
+    const objectDropdown = document.getElementById('fake-objects');
+    $('#fake-objects')
+      .empty()
+      .select2()
+      .append(dropdownDefaultValue)
+    ;
+  },
+  saveFakeTask: function (object) {
+    const objectDropdown = document.getElementById('fake-objects');
+    if (taskManagement.validateForm(objectDropdown.value)) {
+      const taskNameToSave = objectDropdown.options[objectDropdown.selectedIndex].value;
+      let task = {
+        name: taskNameToSave,
+        priority: fakeObjectDefaultPriority
+      }
+      storageManagement.submitTask(task);
+      tableManagement.reloadTableBody();
+    }
+    $("#new-fetch-type").select2("val", "");
+    $("#fake-objects").empty().select2("val", "");
+  },
+};
 
 function onPageLoaded() {
   $(document).delegate('.btn-delete-task', 'click', function () {
     const confirmResult = confirm(deleteMessage);
     if (confirmResult) {
-      deleteTask(this.id);
+      storageManagement.deleteTask(this.id);
     }
   });
-}
+};
 
-function prepareFileToDownload() {
-  let tasksObject = [];
-  let tasksKeysFromLocalStorage = loadDataFromLocalStorage();
-  if (tasksKeysFromLocalStorage !== null) {
-    let tasksKeys = tasksKeysFromLocalStorage.split(',');
-    tasksKeys.forEach(function (element) {
-      const retrievedTask = localStorage.getItem(element);
-      const parsedTask = JSON.parse(retrievedTask);
-      tasksObject.push(parsedTask);
-    });
-  }
-  let dataToDownload = charsetEncoding + encodeURIComponent(JSON.stringify(tasksObject));
-  let dlAnchorElem = document.getElementById('btn-save-to-file');
-  dlAnchorElem.setAttribute("href", dataToDownload);
-  dlAnchorElem.setAttribute("download", downloadFileName);
-}
-
-function submitTask(element) {
-  const taskKey = generateTaskName();
-  updateTaskList(taskKey);
-  localStorage.setItem(taskKey, JSON.stringify(element));
-}
-
-function loadDataFromLocalStorage() {
-  let data = localStorage.getItem('taskNames');
-  return data;
-}
-
-function populateTable(data) {
-  if (data !== null) {
-    let tasksKeys = data.split(',');
-    tasksKeys.forEach(fetchTask);
-  }
-}
-
-function fetchTask(element, index, array) {
-  const retrievedTask = localStorage.getItem(element);
-  const parsedTask = JSON.parse(retrievedTask);
-  appendToTable(parsedTask, element);
-}
-
-function appendToTable(parsedTask, taskKey) {
-  const taskTable = document.getElementById('task-table-body');
-  const row = taskTable.insertRow(tableIndexToAppend);
-  const taskNameCell = row.insertCell(tableIndexToAppend);
-  const taskPriorityCell = row.insertCell(tableIndexToAppend);
-  const taskBinCell = row.insertCell(tableIndexToAppend);
-  row.classList.add('task-' + parsedTask.priority.toLowerCase());
-  taskNameCell.innerHTML = parsedTask.name;
-  taskPriorityCell.innerHTML = priorityMark + parsedTask.priority;
-  taskBinCell.innerHTML = trashBinMark;
-  taskBinCell.firstChild.setAttribute("id", taskKey);
-}
-
-function updateTaskList(taskName) {
-  let storedKeys = localStorage.getItem('taskNames');
-  if (storedKeys == null) {
-    let storedKeysArray = [];
-    storedKeysArray.push(taskName);
-    storedKeys = storedKeysArray;
-  } else {
-    let storedKeysArray = storedKeys.split(',');
-    storedKeysArray.push(taskName);
-    storedKeys = storedKeysArray;
-  }
-  localStorage.setItem('taskNames', storedKeys);
-}
-
-function generateTaskName() {
-  let currentTime = new Date();
-  let key = currentTime.getFullYear().toString() +
-    currentTime.getMonth().toString() +
-    currentTime.getDate().toString() +
-    currentTime.getHours().toString() +
-    currentTime.getMinutes().toString() +
-    currentTime.getSeconds().toString() +
-    currentTime.getMilliseconds().toString() +
-    Math.random();
-  return key;
-}
-
-function validateForm(input) {
-  if (input == 'undefined') {
-    alert(objectNotSelected);
-  } else {
-    if (!input.replace(/\s/g, '').length) {
-      alert(nameEmptyAlert);
-      return false;
-    } else {
-      return true;
-    }
-  }
-}
-
-function parseJsonTasksToObject(contents) {
-  const parsedTasks = JSON.parse(contents);
-  parsedTasks.forEach(submitTask);
-  reloadTableBody();
-}
-
-function openFileMouseEventHandler(elem) {
-  const eventMouse = document.createEvent("MouseEvents");
-  eventMouse.initMouseEvent("click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-  elem.dispatchEvent(eventMouse);
-}
-
-function openFile(func) {
-  readFile = function (e) {
-    const file = e.target.files[0];
-    if (!file) {
-      return;
-    }
-    let reader = new FileReader();
-    reader.onload = function (e) {
-      let contents = e.target.result;
-      fileInput.func(contents);
-      document.body.removeChild(fileInput)
-    };
-    reader.readAsText(file)
-  };
-  fileInput = document.createElement("input");
-  fileInput.type = 'file';
-  fileInput.style.display = 'none';
-  fileInput.onchange = readFile;
-  fileInput.func = func;
-  document.body.appendChild(fileInput);
-  openFileMouseEventHandler(fileInput);
-}
-
-function sortTable(column, direction) {
-  let table, rows, switching, i, x, y, shouldSwitch, shouldBreak;
-  table = document.getElementById("task-table");
-  switching = true;
-  while (switching) {
-    switching = false;
-    rows = table.rows;
-    for (i = 1; i < (rows.length - 1); i++) {
-      shouldSwitch = false;
-      shouldBreak = false;
-      x = rows[i].getElementsByTagName("TD")[column];
-      y = rows[i + 1].getElementsByTagName("TD")[column];
-      switch (direction) {
-        case "asc":
-          if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-            shouldSwitch = true;
-            shouldBreak = true;
-          }
-          break;
-        case "desc":
-          if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-            shouldSwitch = true;
-            shouldBreak = true;
-          }
-          break;
-      }
-      if (shouldBreak)
-        break;
-    }
-    if (shouldSwitch) {
-      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-      switching = true;
-    }
-  }
-}
-
-function deleteTask(id) {
-  localStorage.removeItem(id)
-  let storedKeys = localStorage.getItem('taskNames');
-  let storedKeysArray = storedKeys.split(',');
-  if (storedKeysArray.length == 1) {
-    localStorage.removeItem('taskNames');
-  } else {
-    storedKeysArray.splice(storedKeysArray.indexOf(id), 1);
-    localStorage.setItem('taskNames', storedKeysArray);
-  }
-  reloadTableBody();
-}
-
-function getRandomIndex(max) {
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max + 1));
-}
-
-function fetchFakeObjects(type) {
-  clearFakeObjectDropdown();
-  let randomObjectsFromApi = [];
-  fetch(dataFetchApi + type)
-    .then(response => response.json())
-    .then(json => {
-      for (let apiIterator = 0; apiIterator < numberOfRecordsToFetchFromApi; apiIterator++) {
-        let randomIndex = getRandomIndex(json.length);
-        $.each(json.slice(randomIndex, randomIndex + 1), function (i, data) {
-          randomObjectsFromApi.push(data);
-          populateFakeObjectDropdown(data, type);
-        });
-      }
-    })
-}
-
-function populateFakeObjectDropdown(data, type) {
-  const objectDropdown = document.getElementById('fake-objects');
-  const newOption = document.createElement("option");
-  switch (type) {
-    case 'todos':
-    case 'posts':
-      newOption.text = data.title;
-      newOption.value = data.title;
-      break;
-    case 'comments':
-      newOption.text = data.name;
-      newOption.value = data.name;
-      break;
-    default:
-      newOption.text = null;
-  }
-  objectDropdown.add(newOption);
-}
-
-function clearFakeObjectDropdown() {
-  const objectDropdown = document.getElementById('fake-objects');
-  $('#fake-objects')
-    .empty()
-    .select2()
-    .append(dropdownDefaultValue)
-  ;
-}
-
-function saveFakeTask(object) {
-  const objectDropdown = document.getElementById('fake-objects');
-  if (validateForm(objectDropdown.value)) {
-    const taskNameToSave = objectDropdown.options[objectDropdown.selectedIndex].value;
-    let task = {
-      name: taskNameToSave,
-      priority: fakeObjectDefaultPriority
-    }
-    submitTask(task);
-    reloadTableBody();
-  }
-  $("#new-fetch-type").select2("val", "");
-  $("#fake-objects").empty().select2("val", "");
-}
-
-function requestLogin() {
-  $('#alert-warning-login').hide();
-  let user = {
-    userLogin: document.getElementById('login-name').value,
-    userPassword: document.getElementById('login-pass').value
-  }
-  authenticateUser(user);
-}
-
-function authenticateUser(user) {
-  const userWithPrivileges = localStorage.getItem('credentials');
-  if (userWithPrivileges !== null) {
-    const parsedUserWithPrivileges = JSON.parse(userWithPrivileges);
-    if (parsedUserWithPrivileges.userLogin == user.userLogin && parsedUserWithPrivileges.userPassword == user.userPassword) {
-      $('#app-content').show();
-      $('#login-app-window').hide();
-      reloadTableBody();
-    } else {
-      userNotAuthorized();
-    }
-  } else {
-    userNotAuthorized();
-  }
-}
-
-function reloadTableBody() {
-  $("#task-table-body").empty();
-  let tasksKeysFromLocalStorage = loadDataFromLocalStorage();
-  populateTable(tasksKeysFromLocalStorage);
-}
-
-function createAccount() {
-  const confirmResult = confirm(newAccountMessage);
-  if (confirmResult) {
-    let user = {
-      userLogin: document.getElementById('login-name').value,
-      userPassword: document.getElementById('login-pass').value
-    }
-    if (user.userPassword.search(/[a-z]/) < 0) {
-      alert(alertPasswordNeedLowerCaseChar);
-    } else if (user.userPassword.search(/[A-Z]/) < 0) {
-      alert(alertPasswordNeedUpperCaseChar);
-    }else{
-      const parsedUser = JSON.stringify(user);
-      localStorage.setItem('credentials', parsedUser);
-      const inMemoryTasks = localStorage.getItem('taskNames');
-      if (inMemoryTasks !== null) {
-        let parsedInMemoryTasks = inMemoryTasks.split(',');
-        parsedInMemoryTasks.forEach(function (task) {
-          localStorage.removeItem(task);
-        });
-        localStorage.removeItem('taskNames');
-      }
-      $('#alert-warning-login').hide();
-      $('#alert-success-new-account').fadeIn('slow');
-    }
-  }
-}
-
-function userNotAuthorized() {
-  $('#alert-warning-login').fadeIn('slow');
-}
+document.getElementById("btn-save-to-file").addEventListener("click", fileOperations.prepareFileToDownload);
+document.getElementById("new-task-submit").addEventListener("click", taskManagement.submitNewTask);
+document.getElementById("btn-login").addEventListener("click", identityManagement.requestLogin);
+document.getElementById("btn-new-account").addEventListener("click", identityManagement.createAccount);
+document.getElementById("task-name-sort").addEventListener("click", function () {
+  tableManagement.sortTable(0, 'asc');
+}, false);
+document.getElementById("task-priority-sort").addEventListener("click", function () {
+  tableManagement.sortTable(1, 'asc');
+}, false);
+document.getElementById("task-name-sort-desc").addEventListener("click", function () {
+  tableManagement.sortTable(0, 'desc');
+}, false);
+document.getElementById("task-priority-sort-desc").addEventListener("click", function () {
+  tableManagement.sortTable(1, 'desc');
+}, false);
+document.getElementById("btn-load-from-file").addEventListener("click", function () {
+  fileOperations.openFile(storageManagement.parseJsonTasksToObject);
+}, false);
+document.getElementById("btn-fake-add-task").addEventListener("click", apiHandle.saveFakeTask);
+const loaded = document.addEventListener("DOMContentLoaded", onPageLoaded);
